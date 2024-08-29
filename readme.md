@@ -14,13 +14,13 @@
 
 ## 离线强化学习部分
 
-主要是mujoco环境，实验的算法有：IQL，CQL，DT，EDAC，这个部分如果要实验，需要自己建立一个dataset文件夹，下载d4rl数据集。
+主要是mujoco环境，实验的算法有：IQL，CQL，DT，EDAC，这个部分如果要实验，需要自己建立一个dataset文件夹，下载d4rl数据集，然后不需要安装d4rl的包。
 
 
 
 ## 离线到在线强化学习部分
 
-主要是mujoco环境，实验的算法有：AWAC，offlinetoonline，PEX，SO2，不过这里并没有达到论文里描述的结果。
+主要是mujoco环境，实验的算法有：AWAC，offlinetoonline，IQL，PEX，SO2，不过这里有部分并没有达到论文里描述的结果，有一些偏差，比论文描述的差0.1的样子，但也有部分比论文描述的更好。
 
 
 ## 暂时的总结
