@@ -390,10 +390,12 @@ class agent(object):
             process.process_input(v_loss.item(), 'v_loss', 'train/')
             process.process_input(next_q_value.detach().cpu().numpy(), 'next_q_value', 'train/')  
     
-    def train(self,sample,process,writer):
+    def train(self,sample,offlinesample,process,writer):
         
         self.learn_step += 1
         state,action,next_state,reward,mask = sample
+        offstate, offaction,_,_,_ = offlinesample
+        
         
         
         with torch.no_grad():
@@ -435,15 +437,34 @@ class agent(object):
             target_newq = torch.min(target_newq1,target_newq2)
             new_adv = target_newq - new_value
         
-        log_old_prob = self.actor.getlogprob(state,action)
+        log_new_prob = self.actor.getlogprob(state,new_action)
         excl = torch.clamp((self.beta * new_adv).exp(),max=self.adv_clip_max)
-        actor_loss =  (- excl * log_old_prob).mean()
+        actor_loss =  (- excl * log_new_prob).mean()
         
         
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.grad)
         self.actor_optimizer.step()
+        
+        with torch.no_grad():
+            value = self.value.getValue(offstate)
+            target_q1,target_q2 = self.target_Q.getQ(offstate,offaction)
+            target_q = torch.min(target_q1,target_q2)
+            adv = target_q - value
+        
+        log_old_prob = self.offline_actor.getlogprob(offstate,offaction)
+        excl = torch.clamp((self.beta * adv).exp(),max=self.adv_clip_max)
+        offline_actor_loss =  (- excl * log_old_prob).mean()
+        
+        
+        self.offline_actor_optimizer.zero_grad()
+        offline_actor_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.offline_actor.parameters(), self.grad)
+        self.offline_actor_optimizer.step()
+        
+        
+        
         
         
         
@@ -472,6 +493,8 @@ class agent(object):
             
     def get_offline_Actor(self):
         self.offline_actor = copy.deepcopy(self.actor)
+        learning_rate = self.actor_optimizer.param_groups[0]['lr']
+        self.offline_actor_optimizer = torch.optim.Adam(self.offline_actor.parameters(), lr=learning_rate)
             
     def save(self, filename):
         torch.save({

@@ -206,7 +206,7 @@ def train_offlineTOonline(RL_agent, env, eval_env, offlineReplayBuffer,onlineRep
                 combined_reward = torch.cat((reward2, reward1), dim=0)
                 combined_mask = torch.cat((mask2, mask1), dim=0)
                 sample = (combined_state, combined_action, combined_next_state, combined_reward, combined_mask)
-                RL_agent.train(sample, process, writer)
+                RL_agent.train(sample, offlinesample, process, writer)
             RL_agent.training(False)
             e = time.time()
             train_time = (e-s1)   
